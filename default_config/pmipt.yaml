@@ -1,0 +1,46 @@
+mangle:
+  # To allow docker containers to talk to a service listening on their host's
+  # localhost, simply add a rule to the PMIPT[mark_locally_routable] chain in
+  # the format:
+  #
+  # --dst 10.251.0.1 -p <PROTOCOL> --dport <PORT> -j MARK --set-mark 0x12701
+  #
+  # Do not change the destination IP address or the mark. No other rules need
+  # to be added.
+  PMIPT[mark_locally_routable]:
+    rules:
+      # Unbound DNS
+      - --dst 10.251.0.1 -p tcp --dport 53 -j MARK --set-mark 0x12701
+      - --dst 10.251.0.1 -p udp --dport 53 -j MARK --set-mark 0x12701
+      # syslog
+      - --dst 10.251.0.1 -p tcp --dport 514 -j MARK --set-mark 0x12701
+      - --dst 10.251.0.1 -p udp --dport 514 -j MARK --set-mark 0x12701
+      # statsd
+      - --dst 10.251.0.1 -p udp --dport 8125 -j MARK --set-mark 0x12701
+      # datadog apm
+      - --dst 10.251.0.1 -p tcp --dport 8126 -j MARK --set-mark 0x12701
+      # consul RPC
+      - --dst 10.251.0.1 -p tcp --dport 8400 -j MARK --set-mark 0x12701
+      # consul HTTP
+      - --dst 10.251.0.1 -p tcp --dport 8500 -j MARK --set-mark 0x12701
+      # consul DNS
+      - --dst 10.251.0.1 -p tcp --dport 8600 -j MARK --set-mark 0x12701
+      - --dst 10.251.0.1 -p udp --dport 8600 -j MARK --set-mark 0x12701
+  PREROUTING:
+    rules:
+      - -i docker+ --src 127.0.0.0/8 -j DROP
+      - -i docker+ --dst 10.251.0.0/24 -j PMIPT[mark_locally_routable]
+  OUTPUT:
+    rules:
+      - --dst 10.251.0.0/24 -j PMIPT[mark_locally_routable]
+nat:
+  PREROUTING:
+    rules:
+      - -i docker+ -m mark --mark 0x12701 -j DNAT --to-destination 127.0.0.1
+  OUTPUT:
+    rules:
+      - -m mark --mark 0x12701 -j DNAT --to-destination 127.0.0.1
+filter:
+  INPUT:
+    rules:
+      -  -i docker+ --dst 127.0.0.0/8 -m mark ! --mark 0x12701 -j DROP

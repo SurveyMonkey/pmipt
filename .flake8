@@ -1,0 +1,2 @@
+[flake8]
+exclude = .git,__pycache__,dist,deb_dist,build,debian,*.egg,.tox,*.venv,tests

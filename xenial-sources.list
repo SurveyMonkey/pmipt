@@ -1,0 +1,5 @@
+deb http://prod.repo.service.depot/deb/xenial xenial main
+deb http://prod.repo.service.depot/deb/xenial-updates xenial-updates main
+deb http://prod.repo.service.depot/deb/xenial-backports xenial-backports main
+deb http://prod.repo.service.depot/deb/xenial-security xenial-security main 
+deb http://prod.repo.service.depot/deb/sm-xenial xenial main
